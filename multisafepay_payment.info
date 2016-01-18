@@ -1,0 +1,10 @@
+name = MultiSafePay
+description = Provides an <a href="http://www.multisafepay.com/">MultiSafePay</a> payment method type.
+package = Payment
+dependencies[] = libraries
+dependencies[] = payment (>=1.8)
+core = 7.x
+files[] = includes/MultiSafePayPaymentCreatorOrderInterface.inc
+files[] = includes/MultiSafePayPaymentCreatorOrderBase.inc
+files[] = includes/MultiSafePayPaymentCreatorOrderRedirect.inc
+files[] = includes/MultiSafePayPaymentMethodController.inc

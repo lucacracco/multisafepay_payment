@@ -1,0 +1,101 @@
+<?php
+
+/**
+ * @file multisafepay_payment.install
+ * Installation and uninstallation functions.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function multisafepay_payment_schema() {
+  $schema['multisafepay_payment_payment'] = array(
+    'fields' => array(
+      'msp_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'creator_order' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'api_key' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'gateway' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'api_server' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+    ),
+    'primary key' => array('msp_id'),
+    'unique keys' => array(
+      'msp_id' => array('msp_id'),
+    ),
+  );
+
+  return $schema;
+}
+
+function multisafepay_payment_requirements($phase) {
+  $requirements = array();
+  // Ensure translations do not break at install time
+  $t = get_t();
+
+  $requirements['multisafepay_php'] = array(
+    'title' => $t('MultiSafePay Library PHP'),
+  );
+
+  $libraries = libraries_get_libraries();
+  if (isset($libraries['multisafepay_php'])) {
+    $requirements['multisafepay_php']['value'] = $t('Installed');
+    $requirements['multisafepay_php']['severity'] = REQUIREMENT_OK;
+  }
+  else {
+    $requirements['multisafepay_php']['value'] = $t('Not Installed');
+    $requirements['multisafepay_php']['severity'] = REQUIREMENT_ERROR;
+    $requirements['multisafepay_php']['description'] = $t('Please install the MultiSafePay Library PHP:  %url.', array('%url' => 'https://github.com/MultiSafepay/PHP'));
+  }
+
+  return $requirements;
+}
+
+/**
+ * Implements hook_enable().
+ */
+function multisafepay_payment_enable() {
+//  foreach (multisafepay_payment_payment_method_defaults() as $payment_method) {
+//    entity_save('payment_method', $payment_method);
+//  }
+}
+
+/**
+ * Returns default empty payment methods.
+ */
+function multisafepay_payment_payment_method_defaults() {
+  $payment_methods[] = new PaymentMethod(array(
+    'controller' => payment_method_controller_load('MultiSafePayPaymentMethodController'),
+    'controller_data' => array(
+      'type' => 'redirect',
+      'api_key' => '0ff28d5cc3a6e7475be5fa174703788fa155fc94',
+      'gateway' => '',
+      'api_server' => 1,
+    ),
+    'name' => 'multisafepay_test',
+    'enabled' => FALSE,
+    'title_generic' => t('MultiSafePay payment Test'),
+    'title_specific' => t('MultiSafePay payment Test'),
+  ));
+  return $payment_methods;
+}

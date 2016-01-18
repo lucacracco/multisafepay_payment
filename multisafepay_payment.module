@@ -1,0 +1,272 @@
+<?php
+
+/**
+ * @file multisafepay_payment.module
+ */
+
+/**
+ * Implements hook_libraries_info().
+ */
+function multisafepay_payment_libraries_info() {
+
+  $libraries['multisafepay_php'] = array(
+    'name' => 'MultiSafePay Library PHP',
+    'vendor url' => 'https://github.com/MultiSafepay/PHP',
+    'download url' => 'https://github.com/MultiSafepay/PHP/archive/master.zip',
+    'version callback' => '_multisafepay_payment_simple_version_callback',
+    'files' => array(
+      // For PHP libraries, specify include files here, still relative to the
+      // library path.
+      'php' => array(
+        'models/API/Client.php',
+        'models/API/Object/Core.php',
+        'models/API/Object/Gateways.php',
+        'models/API/Object/Issuers.php',
+        'models/API/Object/Orders.php',
+      ),
+    ),
+  );
+  return $libraries;
+}
+
+function _multisafepay_payment_simple_version_callback() {
+  //use some fancy magic to get the version number... or don't
+  return TRUE;
+}
+
+/**
+ * Implements hook_payment_status_info().
+ */
+function multisafepay_payment_payment_status_info() {
+  return array(
+//    new PaymentStatusInfo(
+//      array(
+//        'description' => t('Foo payments are still being processed by Bar to guarantee their authenticity.'),
+//        'status' => PAYMENT_STATUS_FOO,
+//        'parent' => PAYMENT_STATUS_PENDING,
+//        'title' => t('Pending (waiting for Bar authentication)'),
+//      )
+//    ),
+  );
+}
+
+/**
+ * Implements hook_payment_method_controller_info().
+ */
+function multisafepay_payment_payment_method_controller_info() {
+  return array('MultiSafePayPaymentMethodController');
+}
+
+/**
+ * Retrieves the definitions of all creator order plugins, or a specific one.
+ *
+ * @param string|null $creator_order_id
+ *   (optional) The ID of the creator plugin whose definition should be
+ *   retrieved. Or NULL to return all known definitions.
+ *
+ * @return array|null
+ *   If $creator_order_id was given, either the definition of the given creator
+ *   plugin, or NULL if it isn't known. Otherwise, an associative array of all
+ *   known creator plugin definitions, keyed by ID.
+ */
+function multisafepay_payment_creator_order_info($creator_order_id = NULL) {
+  $creators_order = &drupal_static(__FUNCTION__);
+
+  if (!isset($creators_order)) {
+    $creators_order = module_invoke_all('multisafepay_payment_creator_order_info');
+    drupal_alter('multisafepay_payment_creator_order_info', $creators_order);
+    foreach ($creators_order as $i => $definition) {
+      if (empty($definition['class']) ||
+        !class_exists($definition['class']) ||
+        !in_array('MultiSafePayPaymentCreatorOrderInterface', class_implements($definition['class']))
+      ) {
+        $variables['@creator_order'] = $i;
+        watchdog('multisafepay_payment', 'MultiSafepay creator plugin with ID @creator_order_id does not specify a valid plugin class.', $variables, WATCHDOG_ERROR);
+        unset($creators_order[$i]);
+      }
+    }
+  }
+
+  if (!isset($creator_order_id)) {
+    return $creators_order;
+  }
+  return isset($creators_order[$creator_order_id]) ? $creators_order[$creator_order_id] : NULL;
+}
+
+/**
+ * Implements multisafepay_payment_creator_order_info().
+ */
+function multisafepay_payment_multisafepay_payment_creator_order_info() {
+  $creators_order['redirect'] = array(
+    'label' => t('Redirect'),
+    'description' => t('For normal orders.'),
+    'class' => 'MultiSafePayPaymentCreatorOrderRedirect',
+  );
+
+  return $creators_order;
+}
+
+/**
+ * Implements hook_entity_load().
+ */
+function multisafepay_payment_entity_load(array $entities, $entity_type) {
+  if ($entity_type == 'payment_method') {
+    $pmids = array();
+    foreach ($entities as $payment_method) {
+      if ($payment_method->controller->name == 'MultiSafePayPaymentMethodController') {
+        $pmids[] = $payment_method->pmid;
+      }
+    }
+    if ($pmids) {
+      $query = db_select('multisafepay_payment_payment')
+        ->fields('multisafepay_payment_payment')
+        ->condition('msp_id', $pmids);
+      $result = $query->execute();
+      while ($data = $result->fetchAssoc()) {
+        $payment_method = $entities[$data['msp_id']];
+        $payment_method->controller_data = (array) $data;
+        unset($payment_method->controller_data['msp_id']);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function multisafepay_payment_payment_method_insert(PaymentMethod $payment_method) {
+  if ($payment_method->controller->name == 'MultiSafePayPaymentMethodController') {
+    $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
+    $values['msp_id'] = $payment_method->pmid;
+    drupal_write_record('multisafepay_payment_payment', $values);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function multisafepay_payment_payment_method_update(PaymentMethod $payment_method) {
+  if ($payment_method->controller->name == 'MultiSafePayPaymentMethodController') {
+    $values = $payment_method->controller_data += $payment_method->controller->controller_data_defaults;
+    $values['msp_id'] = $payment_method->pmid;
+    drupal_write_record('multisafepay_payment_payment', $values, 'msp_id');
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_ACTION().
+ */
+function multisafepay_payment_payment_method_delete($entity) {
+  if ($entity->controller->name == 'MultiSafePayPaymentMethodController') {
+    db_delete('multisafepay_payment_payment')
+      ->condition('msp_id', $entity->pmid)
+      ->execute();
+  }
+}
+
+/**
+ * Form build callback: implements
+ * PaymentMethodController::payment_method_configuration_form_elements_callback.
+ */
+function multisafepay_payment_payment_method_configuration_form_elements(array $form, array &$form_state) {
+  $payment_method = $form_state['payment_method'];
+  $controller = $payment_method->controller;
+  $controller_data = $payment_method->controller_data + $controller->controller_data_defaults;
+  $form = array();
+
+  // api_key
+  $elements['api_key'] = array(
+    '#default_value' => $controller_data['api_key'],
+    '#required' => TRUE,
+    '#title' => t('Api Key'),
+    '#description' => t('Api Key Site.'),
+    '#type' => 'textfield',
+  );
+  // api_server
+  $elements['api_server'] = array(
+    '#default_value' => $controller_data['api_server'],
+    '#options' => array(
+      $controller::SERVER_SANDBOX => t('Sandbox - use for testing'),
+      $controller::SERVER_PRODUCTION => t('Production - use for processing real transactions'),
+    ),
+    '#required' => TRUE,
+    '#title' => t('Server call'),
+    '#description' => t(''),
+    '#type' => 'radios',
+  );
+
+  // creator_order
+  $creators_order = multisafepay_payment_creator_order_info();
+  $options_creator_order = array();
+  foreach ($creators_order as $creator_name => $creator_object) {
+    $options_creator_order[$creator_name] = $creator_object['label'];
+  }
+  $elements['creator_order'] = array(
+    '#default_value' => $controller_data['creator_order'],
+    '#description' => t('Class used for creation order to before send to MultiSafepay.'),
+    '#options' => $options_creator_order,
+    '#title' => t('Class Creator'),
+    '#required' => TRUE,
+    '#type' => 'select',
+  );
+
+  return $elements;
+}
+
+/**
+ * Implements form validate callback for
+ * multisafepay_payment_payment_method_configuration_form_elements().
+ */
+function multisafepay_payment_payment_method_configuration_form_elements_validate(array $element, array &$form_state) {
+  $values = drupal_array_get_nested_value($form_state['values'], $element['#parents']);
+
+  $controller_data = &$form_state['payment_method']->controller_data;
+  $controller_data['api_key'] = $values['api_key'];
+  $controller_data['api_server'] = $values['api_server'];
+  $controller_data['creator_order'] = $values['creator_order'];
+}
+
+/**
+ * Processes a return/feedback request.
+ *
+ * @return NULL
+ */
+// TODO:
+function multisafepay_payment_return($return = NULL) {
+//  $controller = payment_method_controller_load('GestpayppPaymentMethodController');
+//  $decrypt_data = $controller->feedbackData();
+//  $payment = entity_load_single('payment', $decrypt_data['ShopTransactionID']);
+//
+//  if ($return == NULL) {
+//    $payment->method->controller->processFeedback($decrypt_data, $payment);
+//  }
+//
+//  if ($return == "positive") {
+//    $url = isset($payment->method->controller_data['url_return_positive']) ? $payment->method->controller_data['url_return_positive'] : '<front>';
+//    drupal_goto($url);
+//  }
+//
+//  if ($return == "negative") {
+//    $url = isset($payment->method->controller_data['url_return_negative']) ? $payment->method->controller_data['url_return_negative'] : '<front>';
+//    drupal_goto($url);
+//  }
+}
+
+/**
+ * Checks access for the return URL.
+ *
+ * @return bool
+ */
+// TODO:
+function multisafepay_payment_return_access() {
+//  $controller = payment_method_controller_load('GestpayppPaymentMethodController');
+//  $decrypt_data = $controller->feedbackData();
+//  if (isset($decrypt_data['ShopTransactionID'])) {
+//    $payment = entity_load_single('payment', $decrypt_data['ShopTransactionID']);
+//    if ($payment) {
+//      // TODO: check shopLogin from payment data and from url to receive from Gestpay
+//      return TRUE;
+//    }
+//  }
+//  return FALSE;
+}
