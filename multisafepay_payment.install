@@ -27,11 +27,6 @@ function multisafepay_payment_schema() {
         'length' => 255,
         'not null' => TRUE,
       ),
-      'gateway' => array(
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => FALSE,
-      ),
       'api_server' => array(
         'type' => 'int',
         'size' => 'tiny',
@@ -89,7 +84,6 @@ function multisafepay_payment_payment_method_defaults() {
     'controller_data' => array(
       'type' => 'redirect',
       'api_key' => '0ff28d5cc3a6e7475be5fa174703788fa155fc94',
-      'gateway' => '',
       'api_server' => 1,
     ),
     'name' => 'multisafepay_test',

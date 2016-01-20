@@ -25,21 +25,21 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
   protected $payment_method;
 
   /**
-   * The suggester plugin's ID.
+   * The creator plugin's ID.
    *
    * @var string
    */
   protected $pluginId;
 
   /**
-   * The suggester plugin's definition.
+   * The creator plugin's definition.
    *
    * @var array
    */
   protected $pluginDefinition = array();
 
   /**
-   * The suggester plugin's configuration.
+   * The creator plugin's configuration.
    *
    * @var array
    */
@@ -56,18 +56,18 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
   }
 
   /**
-   * Constructs a SearchApiAutocompleteSuggesterPluginBase.
+   * Constructs a MultiSafePayPaymentCreatorOrderBase.
    *
-   * @param Payment $payment
-   *   The payment to which this creator is attached.
+   * @param \Payment $payment
+   *    The payment to which this creator is attached.
+   * @param \PaymentMethod $payment_method
+   *    The PaymentMethod to which this creator is attached.
    * @param array $configuration
-   *   An associative array containing the suggester's configuration, if any.
-   * @param array $configuration
-   *   An associative array containing the suggester's configuration, if any.
-   * @param string $plugin_id
-   *   The suggester's plugin ID.
+   *    An associative array containing the creator's configuration, if any.
+   * @param $plugin_id
+   *    The creator's plugin ID.
    * @param array $plugin_definition
-   *   The suggester plugin's definition.
+   *    The creator plugin's definition.
    */
   public function __construct(Payment $payment, PaymentMethod $payment_method, array $configuration, $plugin_id, array $plugin_definition) {
     $this->pluginId = $plugin_id;
@@ -163,8 +163,18 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
     }
   }
 
-//  public function createOrder() {
-//    // TODO: Implement createOrder() method.
-//  }
+  /**
+   * {@inheritdoc}
+   */
+  public function createOrder(array $context, Payment $payment) {
+    // TODO: Implement createOrder() method.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function receiveFeedback($transaction_id, Payment $payment, $status) {
+    // TODO: Implement receiveFeedback() method.
+  }
 
 }

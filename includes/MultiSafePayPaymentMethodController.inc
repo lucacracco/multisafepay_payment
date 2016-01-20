@@ -41,7 +41,6 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
     'api_server' => self::SERVER_SANDBOX,
     'api_key' => '',
     'creator_order' => '',
-    'gateway' => NULL,
   );
 
   /**
@@ -122,7 +121,7 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
         $definition['class'],
         'create'
       ), $payment, $payment->method, $configuration = array(), $creator_order_id, $definition);
-      $msp_order = $creator_order->createOrder();
+      $msp_order = $creator_order->createOrder($payment->context_data, $payment);
     } catch (Exception $e) {
       return NULL;
     }
@@ -187,6 +186,46 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
     else {
       throw new InvalidArgumentException(t('Server type does not exist.'));
     }
+  }
+
+  /**
+   * Map Status from Payment and MultiSafepay.
+   *
+   * @param null $msp_status
+   * @return array|string
+   */
+  function mapStatus($msp_status = NULL) {
+
+    $msp_status = strtolower($msp_status);
+
+    $map = array(
+      'initialized' => PAYMENT_STATUS_NEW,
+      // Rejected by the credit card company.
+      'declined' => PAYMENT_STATUS_AUTHORIZATION_FAILED,
+      // Canceled by the merchant (only applies to the status Initialised or Uncleared).
+      'canceled' => PAYMENT_STATUS_FAILED,
+      // Payment has been successfully completed.
+      'completed' => PAYMENT_STATUS_SUCCESS,
+      // Depending on the payment method unfinished transactions automatically expire after a predefined period.
+      'expired' => PAYMENT_STATUS_EXPIRED,
+      // Waiting for manual permission of the merchant to approve/disapprove the payment.
+      'uncleared' => PAYMENT_STATUS_PENDING,
+      // Payment has been refunded to the customer.
+      'refunded' => PAYMENT_STATUS_CANCELLED,
+      // The payment has been partially refunded to the customer.
+      'partial_Refunded' => PAYMENT_STATUS_UNKNOWN,
+      // Payout/refund has been temporary put on reserved, a temporary status, till the e-wallet has been checked on sufficient balance.
+      'reserved' => PAYMENT_STATUS_PENDING,
+      // Failed payment.
+      'void' => PAYMENT_STATUS_FAILED,
+      // Forced reversal of funds initiated by consumer’s issuing bank. Only applicable to direct debit and credit card payments.
+      'chargedback' => PAYMENT_STATUS_UNKNOWN,
+    );
+
+    if (isset($msp_status)) {
+      return isset($map[$msp_status]) ? $map[$msp_status] : PAYMENT_STATUS_UNKNOWN;
+    }
+    return $map;
   }
 
 }
