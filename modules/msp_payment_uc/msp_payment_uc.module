@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file msp_payment_uc.module
+ */
+
+/**
+ * Implements hook_multisafepay_payment_creator_order_info().
+ */
+function msp_payment_uc_multisafepay_payment_creator_order_info() {
+  $creators_order['ubercart'] = array(
+    'label' => t('Drupal Ubercart'),
+    'description' => t('For Drupal Ubercart orders.'),
+    'class' => 'MSPPaymentCreatorOrderUbercart',
+  );
+
+  return $creators_order;
+}
