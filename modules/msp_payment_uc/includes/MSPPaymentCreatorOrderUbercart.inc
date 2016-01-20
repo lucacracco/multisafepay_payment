@@ -56,7 +56,7 @@ class MSPPaymentCreatorOrderUbercart extends MultiSafePayPaymentCreatorOrderBase
 
       // This payment is not reference a commerce order.
       watchdog(
-        'msp_payment_commerce',
+        'msp_payment_uc',
         t('This payment \'@pid\' is not reference a ubercart order'),
         array(
           '@pid' => $payment->pid,
