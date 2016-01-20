@@ -92,11 +92,31 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
         drupal_goto($payment_link);
       }
       else {
+        // Set Failed status.
         $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_FAILED));
+
+        // Print and log error.
+        watchdog(
+          'multisafepay_payment',
+          t('Payment Link redirect not correct for payment \'@pid\' '),
+          array('@pid' => $payment->pid),
+          WATCHDOG_ERROR
+        );
+        drupal_set_message(t('Error! Contact Support'), 'error');
       }
     }
     else {
+      // TODO: print and log error.
       $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_FAILED));
+
+      // Print and log error.
+      watchdog(
+        'multisafepay_payment',
+        t('MSP Order not load for payment \'@pid\' '),
+        array('@pid' => $payment->pid),
+        WATCHDOG_ERROR
+      );
+      drupal_set_message(t('Error! Contact Support'), 'error');;
     }
   }
 
@@ -123,6 +143,14 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
       ), $payment, $payment->method, $configuration = array(), $creator_order_id, $definition);
       $msp_order = $creator_order->createOrder($payment->context_data, $payment);
     } catch (Exception $e) {
+
+      // Log error and NULL return.
+      watchdog(
+        'multisafepay_payment',
+        t('Function or Plugin @plugin_creator not found'),
+        array('@plugin_creator' => $definition['class']),
+        WATCHDOG_ERROR
+      );
       return NULL;
     }
 
