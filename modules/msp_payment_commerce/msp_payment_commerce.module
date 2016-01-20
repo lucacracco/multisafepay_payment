@@ -1,0 +1,18 @@
+<?php
+
+/**
+ * @file msp_payment_commerce.module
+ */
+
+/**
+ * Implements hook_multisafepay_payment_creator_order_info().
+ */
+function msp_payment_commerce_multisafepay_payment_creator_order_info() {
+  $creators_order['commerce'] = array(
+    'label' => t('Drupal Commerce'),
+    'description' => t('For Drupal Commerce orders.'),
+    'class' => 'MSPPaymentCreatorOrderCommerce',
+  );
+
+  return $creators_order;
+}
