@@ -75,9 +75,7 @@ class MSPPaymentCreatorOrderUbercart extends MultiSafePayPaymentCreatorOrderBase
     $amount = $wrapper_uc_order->order_total->value();
 
     // Amount must be in cents es.10,00euro => 1000
-    // TODO: correct conversion because created problem to cast.
-    $amount = (float) $amount;
-    $amount = $amount * 100;
+    $amount = round($amount * 100, 0);
 
     // Return array order.
     $msp_order = array(
