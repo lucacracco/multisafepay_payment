@@ -25,12 +25,10 @@ function msp_payment_commerce_multisafepay_payment_creator_order_info() {
 function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_state) {
   // If this checkout form contains the payment method radios...
   if (!empty($form['commerce_payment']['payment_method']['#options'])) {
-    // Loop over its options array looking for a PayPal WPS option.
+    // Loop over its options array looking for a MultiSafePay option.
     foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
-      list($method_id, $rule_name) = explode('|', $key);
-
       // If we find MultiSafePay...
-      if (stripos(strtolower($method_id),'multisafepay')!==FALSE) {
+      if (stripos(strtolower($value),'multisafepay')!==FALSE) {
         // Prepare the replacement radio button text with icons.
         $value = t('Multisafepay');
         $value .= '<div class="commerce-msp-icons"><img src="http://www.multisafepay.com/downloads/betaalbutton_uk/fco/fastcheckout-liggend-320px.gif" width="320" height="110" hspace="6" alt="multisafepay fastcheckout" title="Multisafepay fast checkout" border="0"></div>';
