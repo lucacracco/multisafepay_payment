@@ -4,8 +4,8 @@ Provides an MultiSafePay payment method type for Drupal 7 Payment
 You need to download the Multisafepay library before enable the module.
 
 Method 1: 
-1. download https://github.com/MultiSafepay/PHP/archive/master.zip and unzip in  sites/all/libraries folder
-2. rename "PHP-master" folder in "multisafepay_php"
+ 1. download https://github.com/MultiSafepay/PHP/archive/master.zip and unzip in  sites/all/libraries folder
+ 2. rename "PHP-master" folder in "multisafepay_php"
 
 Method 2: from the root dir of your project in CLI type:
 ```
