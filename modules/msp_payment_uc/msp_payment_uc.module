@@ -16,3 +16,19 @@ function msp_payment_uc_multisafepay_payment_creator_order_info() {
 
   return $creators_order;
 }
+
+/**
+ * Implements hook_uc_payment_method_alter().
+ *
+ * @param $methods
+ *   Array of payment methods passed by reference.  Array is structured like
+ *   the return value of hook_uc_payment_method().
+ */
+function msp_payment_uc_uc_payment_method_alter(&$methods) {
+    foreach ($methods as $key => $method) {
+        if (stripos(strtolower($method['name']),'multisafepay')!==FALSE) {
+            $methods[$key]['title'] = 'Multisafepay fast checkout<br />'.
+            '<img src="http://www.multisafepay.com/downloads/betaalbutton_uk/fco/fastcheckout-liggend-320px.gif" width="320" height="110" hspace="6" alt="multisafepay fastcheckout" title="Multisafepay fast checkout" border="0"> ';
+        }
+    }
+}
