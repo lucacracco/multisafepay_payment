@@ -16,3 +16,24 @@ function msp_payment_commerce_multisafepay_payment_creator_order_info() {
 
   return $creators_order;
 }
+
+/**
+ * Implements hook_form_commerce_checkout_form_alter().
+ * @param $form
+ * @param $form_state
+ */
+function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  // If this checkout form contains the payment method radios...
+  if (!empty($form['commerce_payment']['payment_method']['#options'])) {
+    // Loop over its options array looking for a MultiSafePay option.
+    foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
+      // If we find MultiSafePay...
+      if (stripos(strtolower($value),'multisafepay')!==FALSE) {
+        // Prepare the replacement radio button text with icons.
+        $value = t('Multisafepay');
+        $value .= '<div class="commerce-msp-icons"><img src="http://www.multisafepay.com/downloads/betaalbutton_uk/fco/fastcheckout-liggend-320px.gif" width="320" height="110" hspace="6" alt="multisafepay fastcheckout" title="Multisafepay fast checkout" border="0"></div>';
+        break;
+      }
+    }
+  }
+}
