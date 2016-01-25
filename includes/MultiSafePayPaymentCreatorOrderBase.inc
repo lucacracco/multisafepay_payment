@@ -11,20 +11,6 @@
 abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymentCreatorOrderInterface {
 
   /**
-   * The payment.
-   *
-   * @var Payment
-   */
-  protected $payment;
-
-  /**
-   * The payment method this creator is attached to.
-   *
-   * @var PaymentMethod
-   */
-  protected $payment_method;
-
-  /**
    * The creator plugin's ID.
    *
    * @var string
@@ -46,22 +32,8 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
   protected $configuration = array();
 
   /**
-   * {@inheritdoc}
-   */
-  public static function create(Payment $payment, PaymentMethod $payment_method, array $configuration, $plugin_id, array $plugin_definition) {
-    // It seems there is no way to have "new static()"-like functionality in
-    // PHP 5.2, so we have to use this workaround instead.
-    $class = $plugin_definition['class'];
-    return new $class($payment, $payment_method, $configuration, $plugin_id, $plugin_definition);
-  }
-
-  /**
    * Constructs a MultiSafePayPaymentCreatorOrderBase.
    *
-   * @param \Payment $payment
-   *    The payment to which this creator is attached.
-   * @param \PaymentMethod $payment_method
-   *    The PaymentMethod to which this creator is attached.
    * @param array $configuration
    *    An associative array containing the creator's configuration, if any.
    * @param $plugin_id
@@ -69,11 +41,9 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
    * @param array $plugin_definition
    *    The creator plugin's definition.
    */
-  public function __construct(Payment $payment, PaymentMethod $payment_method, array $configuration, $plugin_id, array $plugin_definition) {
+  public function __construct($plugin_id, array $plugin_definition, array $configuration) {
     $this->pluginId = $plugin_id;
     $this->pluginDefinition = $plugin_definition;
-    $this->payment = $payment;
-    $this->payment_method = $payment_method;
     $this->setConfiguration($configuration);
   }
 
@@ -89,20 +59,6 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
    */
   public function getPluginDefinition() {
     return $this->pluginDefinition;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getPayment() {
-    return $this->payment;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getPaymentMethod() {
-    return $this->payment_method;
   }
 
   /**
@@ -138,14 +94,38 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return array();
+    return array(
+      'logo' => '',
+    );
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, array &$form_state) {
-    return array();
+    $form = array();
+
+    // Get all logos for MultiSafePay.
+    $msp_maps_logos = multisafepay_payment_logo();
+    $options = array();
+    foreach ($msp_maps_logos as $logo) {
+      $image = theme_image(array(
+        'path' => $logo['uri'],
+        'attributes' => array()
+      ));
+      $options[$logo['name']] = $logo['name'] . '<br />' . $image;
+    }
+
+    // Field logo.
+    $form['logo'] = array(
+      '#type' => 'radios',
+      '#title' => t('Selected logo'),
+      '#options' => $options,
+      '#default_value' => $this->configuration['logo'],
+      '#description' => t('Set this logo used in form.'),
+    );
+
+    return $form;
   }
 
   /**
@@ -158,15 +138,12 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array $form, array &$form_state) {
-    if (!empty($form_state['values'])) {
-      $this->setConfiguration($form_state['values']);
-    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createOrder(array $context, Payment $payment) {
+  public function createOrder(Payment $payment) {
 
     // Variables.
     global $base_url;

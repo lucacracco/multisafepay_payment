@@ -13,43 +13,36 @@ class MultiSafePayPaymentCreatorOrderRedirect extends MultiSafePayPaymentCreator
   /**
    * {@inheritdoc}
    */
+  public function __construct($plugin_id, array $plugin_definition, array $configuration) {
+    parent::__construct($plugin_id, $plugin_definition, $configuration);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function defaultConfiguration() {
-    return array(
-      'test' => array(),
-    );
+    return parent::defaultConfiguration();
   }
 
   /**
    * {@inheritdoc}
    */
-  // TODO: finish this function after implemented form in form creation payment method.
   public function buildConfigurationForm(array $form, array &$form_state) {
-
-    $form['test'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Test'),
-      '#description' => t('Description'),
-    );
-
-    return $form;
+    return parent::buildConfigurationForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  // TODO: finish this function after implemented form in form creation payment method.s
   public function submitConfigurationForm(array $form, array &$form_state) {
-    $values = $form_state['values'];
-    $values['fields'] = array_keys(array_filter($values['fields']));
-    $this->setConfiguration($values);
+    parent::submitConfigurationForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createOrder(array $context, Payment $payment) {
-    $msp_order = parent::createOrder($context, $payment);
-    return $msp_order;
+  public function createOrder(Payment $payment) {
+    return parent::createOrder($payment);
   }
 
   /**

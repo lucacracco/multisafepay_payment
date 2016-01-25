@@ -59,52 +59,52 @@ function multisafepay_payment_payment_method_controller_info() {
 }
 
 /**
- * Retrieves the definitions of all creator order plugins, or a specific one.
+ * Retrieves the definitions of all MultiSafepay order plugins, or a specific one.
  *
- * @param string|null $creator_order_id
- *   (optional) The ID of the creator plugin whose definition should be
+ * @param string|null $plugin_msp_order
+ *   (optional) The ID of the plugin whose definition should be
  *   retrieved. Or NULL to return all known definitions.
  *
  * @return array|null
- *   If $creator_order_id was given, either the definition of the given creator
+ *   If $plugin_msp_order was given, either the definition of the given
  *   plugin, or NULL if it isn't known. Otherwise, an associative array of all
- *   known creator plugin definitions, keyed by ID.
+ *   known plugin definitions, keyed by ID.
  */
-function multisafepay_payment_creator_order_info($creator_order_id = NULL) {
-  $creators_order = &drupal_static(__FUNCTION__);
+function multisafepay_payment_plugin_msp_order_info($plugin_msp_order = NULL) {
+  $plugins_msp_order = &drupal_static(__FUNCTION__);
 
-  if (!isset($creators_order)) {
-    $creators_order = module_invoke_all('multisafepay_payment_creator_order_info');
-    drupal_alter('multisafepay_payment_creator_order_info', $creators_order);
-    foreach ($creators_order as $i => $definition) {
+  if (!isset($plugins_msp_order)) {
+    $plugins_msp_order = module_invoke_all('multisafepay_payment_plugin_msp_order_info');
+    drupal_alter('multisafepay_payment_plugin_msp_order_info', $plugins_msp_order);
+    foreach ($plugins_msp_order as $i => $definition) {
       if (empty($definition['class']) ||
         !class_exists($definition['class']) ||
         !in_array('MultiSafePayPaymentCreatorOrderInterface', class_implements($definition['class']))
       ) {
-        $variables['@creator_order'] = $i;
-        watchdog('multisafepay_payment', 'MultiSafepay creator plugin with ID @creator_order_id does not specify a valid plugin class.', $variables, WATCHDOG_ERROR);
-        unset($creators_order[$i]);
+        $variables['@plugin_msp_order'] = $i;
+        watchdog('multisafepay_payment', 'MultiSafepay creator plugin with ID @plugin_msp_order does not specify a valid plugin class.', $variables, WATCHDOG_ERROR);
+        unset($plugins_msp_order[$i]);
       }
     }
   }
 
-  if (!isset($creator_order_id)) {
-    return $creators_order;
+  if (!isset($plugin_msp_order)) {
+    return $plugins_msp_order;
   }
-  return isset($creators_order[$creator_order_id]) ? $creators_order[$creator_order_id] : NULL;
+  return isset($plugins_msp_order[$plugin_msp_order]) ? $plugins_msp_order[$plugin_msp_order] : NULL;
 }
 
 /**
- * Implements multisafepay_payment_creator_order_info().
+ * Implements multisafepay_payment_plugin_msp_order_info().
  */
-function multisafepay_payment_multisafepay_payment_creator_order_info() {
-  $creators_order['redirect'] = array(
+function multisafepay_payment_multisafepay_payment_plugin_msp_order_info() {
+  $plugings_msp_order['redirect'] = array(
     'label' => t('Redirect'),
     'description' => t('For normal orders.'),
     'class' => 'MultiSafePayPaymentCreatorOrderRedirect',
   );
 
-  return $creators_order;
+  return $plugings_msp_order;
 }
 
 /**
@@ -196,19 +196,58 @@ function multisafepay_payment_payment_method_configuration_form_elements(array $
     '#type' => 'radios',
   );
 
-  // creator_order
-  $creators_order = multisafepay_payment_creator_order_info();
-  $options_creator_order = array();
-  foreach ($creators_order as $creator_name => $creator_object) {
-    $options_creator_order[$creator_name] = $creator_object['label'];
-  }
-  $elements['creator_order'] = array(
-    '#default_value' => $controller_data['creator_order'],
-    '#description' => t('Class used for creation order to before send to MultiSafepay.'),
-    '#options' => $options_creator_order,
-    '#title' => t('Class Creator'),
+  // Get all Plugins.
+  $plugins = multisafepay_payment_plugin_msp_order_info();
+
+  // Retrive default plugin used.
+  $plugin_default = isset($controller_data['plugin']) ? $controller_data['plugin'] : key($plugins);
+
+  $elements['plugin'] = array(
+    '#type' => 'radios',
+    '#title' => t('Plugin'),
+    '#description' => t('Choose the plugin implementation to use.'),
+    '#options' => array(),
     '#required' => TRUE,
-    '#type' => 'select',
+    '#default_value' => $plugin_default,
+    '#ajax' => array(
+      'callback' => 'multisafepay_payment_plugin_ajax_callback',
+      'wrapper' => 'multisafepay-payment-plugin-configuration',
+    ),
+  );
+
+  foreach ($plugins as $plugin_id => $plugin_data) {
+
+    $configuration = unserialize($controller_data['configuration']);
+    $configuration = is_array($configuration) ? $configuration : array();
+    $plugin = new $plugin_data['class']($plugin_id, $plugin_data, $configuration);
+
+    // Add the creator to the creator options.
+    $elements['plugin']['#options'][$plugin_id] = $plugin->label();
+
+    // Then, also add the configuration form for the selected suggester.
+    if ($plugin_id != $plugin_default) {
+      continue;
+    }
+
+    $plugin_form_state = &multisafepay_payment_get_plugin_form_state($form_state);
+    $plugin_form = $plugin->buildConfigurationForm(array(), $plugin_form_state);
+    if ($plugin_form) {
+      $elements['configuration']['plugin_configuration'] = $plugin_form;
+      $elements['configuration']['plugin_configuration']['#type'] = 'fieldset';
+      $elements['configuration']['plugin_configuration']['#title'] = t('Configure the %plugin plugin', array('%plugin' => $plugin->label()));
+      $elements['configuration']['plugin_configuration']['#description'] = $plugin->getDescription();
+      $elements['configuration']['plugin_configuration']['#collapsible'] = TRUE;
+    }
+    else {
+      $elements['configuration']['plugin_configuration']['#type'] = 'item';
+    }
+    $elements['configuration']['plugin_configuration']['#prefix'] = '<div id="multisafepay-payment-plugin-configuration">';
+    $elements['configuration']['plugin_configuration']['#suffix'] = '</div>';
+  }
+  $elements['configuration']['plugin_configuration']['old_plugin_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $controller_data['plugin'],
+    '#tree' => FALSE,
   );
 
   return $elements;
@@ -224,7 +263,52 @@ function multisafepay_payment_payment_method_configuration_form_elements_validat
   $controller_data = &$form_state['payment_method']->controller_data;
   $controller_data['api_key'] = $values['api_key'];
   $controller_data['api_server'] = $values['api_server'];
-  $controller_data['creator_order'] = $values['creator_order'];
+  $controller_data['plugin'] = $values['plugin'];
+  $controller_data['plugin'] = $values['plugin'];
+  $controller_data['configuration'] = $values['configuration']['plugin_configuration'];
+
+  // TODO: implements validateConfigurationForm() of plugin selected.
+}
+
+/**
+ * Implements form submit callback for
+ * multisafepay_payment_payment_method_configuration_form_elements().
+ */
+function multisafepay_payment_payment_method_configuration_form_elements_submit(array $element, array &$form_state) {
+  // TODO: implements submitConfigurationForm() of plugin selected.
+}
+
+/**
+ * Form AJAX handler for multisafepay_payment_payment_method_configuration_form_elements().
+ */
+function multisafepay_payment_plugin_ajax_callback(array $form, array &$form_state) {
+  return $form['controller_form']['configuration']['plugin_configuration'];
+}
+
+/**
+ * Returns a new form state for the suggester configuration sub-form.
+ *
+ * @param array $form_state
+ *   The original form state.
+ *
+ * @return array
+ *   A form state for the sub-form.
+ */
+function &multisafepay_payment_get_plugin_form_state(array &$form_state) {
+  $sub_form_state = &$form_state['suggester_form_state'];
+
+  foreach (array('values', 'input') as $key) {
+    if (!isset($form_state[$key]['options']['suggester_configuration'])) {
+      $form_state[$key]['options']['suggester_configuration'] = array();
+    }
+    $sub_form_state[$key] = &$form_state[$key]['options']['suggester_configuration'];
+  }
+
+  foreach (array('rebuild', 'rebuild_info', 'redirect') as $key) {
+    $sub_form_state[$key] = &$form_state[$key];
+  }
+
+  return $sub_form_state;
 }
 
 /**
@@ -247,19 +331,22 @@ function multisafepay_payment_callback($status = NULL) {
     drupal_access_denied();
   }
 
-  // Load plugin creator.
-  $creator_order_id = $payment->method->controller_data['creator_order'];
-  $definition = multisafepay_payment_creator_order_info($creator_order_id);
+  // Load plugin creator MSP.
+  $plugin_id = $payment->method->controller_data['plugin'];
+  $definition = multisafepay_payment_plugin_msp_order_info($plugin_id);
   if (!$definition) {
     drupal_access_denied();
   }
 
   try {
-    $creator_order = call_user_func(array(
-      $definition['class'],
-      'create'
-    ), $payment, $payment->method, $configuration = array(), $creator_order_id, $definition);
-    $creator_order->receiveFeedback($transaction_id, $payment, $status);
+    // TODO: reformat and correct
+//    $plugin = call_user_func(array(
+//      $definition['class'],
+//      'create'
+//    ), $payment, $payment->method, $configuration = array(), $plugin_id, $definition);
+//    $class = $payment->method->controller_data['plugin'];
+//    $plugin = new $class($plugin_id, $plugin_data, $controller_data['options']);
+//    $plugin->receiveFeedback($transaction_id, $payment, $status);
   } catch (Exception $e) {
     watchdog('multisafepay_payment', t('Error: @error'), array('@error' => $e->getMessage()), WATCHDOG_ERROR);
     return NULL;
@@ -317,4 +404,27 @@ function multisafepay_payment_get_order_from_multisafepay($transaction_id, Payme
     }
   }
   return NULL;
+}
+
+/**
+ * @param null $msp_logo
+ * @return array|null|string
+ */
+function multisafepay_payment_logo($msp_logo = NULL) {
+  // TODO: include .gif
+  $files_logo = file_scan_directory(drupal_get_path('module', 'multisafepay_payment') . '/images', '/\.png/');
+
+  foreach ($files_logo as $file) {
+    $msp_maps_logos[$file->name] = array(
+      'name' => $file->name,
+      'filename' => $file->name,
+      'uri' => $file->uri,
+    );
+  }
+
+  if (isset($msp_logo)) {
+    $msp_logo = strtolower($msp_logo);
+    return isset($msp_maps_logos[$msp_logo]) ? $msp_maps_logos[$msp_logo] : NULL;
+  }
+  return $msp_maps_logos;
 }

@@ -14,9 +14,7 @@ class MSPPaymentCreatorOrderCommerce extends MultiSafePayPaymentCreatorOrderBase
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    return array(
-      'test' => array(),
-    );
+    return parent::defaultConfiguration();
   }
 
   /**
@@ -24,14 +22,7 @@ class MSPPaymentCreatorOrderCommerce extends MultiSafePayPaymentCreatorOrderBase
    */
   // TODO: finish this function after implemented form in form creation payment method.
   public function buildConfigurationForm(array $form, array &$form_state) {
-
-    $form['test'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Test'),
-      '#description' => t('Description'),
-    );
-
-    return $form;
+    return parent::buildConfigurationForm($form, $form_state);
   }
 
   /**
@@ -39,15 +30,13 @@ class MSPPaymentCreatorOrderCommerce extends MultiSafePayPaymentCreatorOrderBase
    */
   // TODO: finish this function after implemented form in form creation payment method.s
   public function submitConfigurationForm(array $form, array &$form_state) {
-    $values = $form_state['values'];
-    $values['fields'] = array_keys(array_filter($values['fields']));
-    $this->setConfiguration($values);
+    parent::submitConfigurationForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function createOrder(array $context, Payment $payment) {
+  public function createOrder(Payment $payment) {
 
     // Variables.
     global $base_url;
@@ -67,15 +56,15 @@ class MSPPaymentCreatorOrderCommerce extends MultiSafePayPaymentCreatorOrderBase
     }
 
     // Load commerce order.
-    $commerce_order = commerce_order_load($context['order_id']);
+    $commerce_order = commerce_order_load($payment->context['order_id']);
     $wrapper_commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
 
     // Return array order.
     $msp_order = array(
       "type" => "redirect",
-      "order_id" => $context['order_id'],
+      "order_id" => $payment->context['order_id'],
       "currency" => $payment->currency_code,
-      "amount" => $context['balance_amount'],
+      "amount" => $payment->context['balance_amount'],
       "description" => $payment->description,
       "payment_options" => array(
         "notification_url" => $base_url . "/multisafepay/callback?payment_pid=" . $payment->pid,

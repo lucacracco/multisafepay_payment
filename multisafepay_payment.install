@@ -17,7 +17,7 @@ function multisafepay_payment_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
-      'creator_order' => array(
+      'plugin' => array(
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -32,6 +32,12 @@ function multisafepay_payment_schema() {
         'size' => 'tiny',
         'not null' => TRUE,
         'default' => 1,
+      ),
+      'configuration' => array(
+        'description' => 'The configurations used to configure plugin for this payment method.',
+        'type' => 'text',
+        'serialize' => TRUE,
+        'not null' => FALSE,
       ),
     ),
     'primary key' => array('msp_id'),

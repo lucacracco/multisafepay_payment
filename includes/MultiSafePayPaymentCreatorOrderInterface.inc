@@ -12,24 +12,6 @@
 interface MultiSafePayPaymentCreatorOrderInterface {
 
   /**
-   * Creates a new instance of this class.
-   *
-   * @param \Payment $payment
-   *   Payment transaction.
-   * @param \PaymentMethod $payment_method
-   *   Payment Method reference transaction.
-   * @param array $configuration
-   *   An associative array containing the creator's configuration, if any.
-   * @param string $plugin_id
-   *   The creator's plugin ID.
-   * @param array $plugin_definition
-   *   The creator plugin's definition.
-   * @return static A new instance of this class.
-   *   A new array order data to send a server MultiSafepay.
-   */
-  public static function create(Payment $payment, PaymentMethod $payment_method, array $configuration, $plugin_id, array $plugin_definition);
-
-  /**
    * Retrieves the plugin's ID.
    *
    * @return string
@@ -44,22 +26,6 @@ interface MultiSafePayPaymentCreatorOrderInterface {
    *   The plugin's definition.
    */
   public function getPluginDefinition();
-
-  /**
-   * Retrieves the payment.
-   *
-   * @return Payment
-   *   The payment reference.
-   */
-  public function getPayment();
-
-  /**
-   * Retrieves the payment method.
-   *
-   * @return PaymentMethod
-   *   The payment method reference.
-   */
-  public function getPaymentMethod();
 
   /**
    * Retrieves the plugin's label.
@@ -143,14 +109,10 @@ interface MultiSafePayPaymentCreatorOrderInterface {
   /**
    * Function to used for create order to send a MultiSafepay.
    *
-   * @param array $context
-   *    Context Data
    * @param \Payment $payment
-   *    Payment
    * @return mixed
-   *    Array with data msp order.
    */
-  public function createOrder(array $context, Payment $payment);
+  public function createOrder(Payment $payment);
 
   /**
    * Function to used for feedback/notification transaction status or redirect buyer.

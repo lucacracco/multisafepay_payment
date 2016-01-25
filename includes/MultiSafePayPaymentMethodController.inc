@@ -40,7 +40,8 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
   public $controller_data_defaults = array(
     'api_server' => self::SERVER_SANDBOX,
     'api_key' => '',
-    'creator_order' => '',
+    'plugin' => NULL,
+    'configuration' => '',
   );
 
   /**
@@ -56,7 +57,6 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
   /**
    * {@inheritdoc}
    */
-  // TODO: implement in this form the configuration form, validate function and submit from MultiSafePayPaymentCreatorOrderInterface.
   public $payment_method_configuration_form_elements_callback = 'multisafepay_payment_payment_method_configuration_form_elements';
 
   /**
@@ -106,7 +106,7 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
       }
     }
     else {
-      // TODO: print and log error.
+      // Print and log error.
       $payment->setStatus(new PaymentStatusItem(PAYMENT_STATUS_FAILED));
 
       // Print and log error.
@@ -129,26 +129,26 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
   function initOrder($payment) {
 
     $msp_order = NULL;
-    $creator_order_id = $payment->method->controller_data['creator_order'];
+    $plugin_id = $payment->method->controller_data['plugin'];
 
-    $definition = multisafepay_payment_creator_order_info($creator_order_id);
+    $definition = multisafepay_payment_plugin_msp_order_info($plugin_id);
     if (!$definition) {
       return NULL;
     }
 
+    // Create MSP Order.
     try {
-      $creator_order = call_user_func(array(
-        $definition['class'],
-        'create'
-      ), $payment, $payment->method, $configuration = array(), $creator_order_id, $definition);
-      $msp_order = $creator_order->createOrder($payment->context_data, $payment);
+      $configuration = unserialize($payment->method->controller_data['configuration']);
+      $configuration = is_array($configuration) ? $configuration : array();
+      $plugin = new $definition['class']($plugin_id, $definition, $configuration);
+      $msp_order = $plugin->createOrder($payment);
     } catch (Exception $e) {
 
       // Log error and NULL return.
       watchdog(
         'multisafepay_payment',
-        t('Function or Plugin @plugin_creator not found'),
-        array('@plugin_creator' => $definition['class']),
+        t('Plugin @plugin not found or error.'),
+        array('@plugin' => $definition['class']),
         WATCHDOG_ERROR
       );
       return NULL;
@@ -158,7 +158,8 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
   }
 
   /**
-   * Start Transaction
+   * Start Transaction.
+   * Communication with server MultiSafepay for retrieve the url redirect.
    */
   function startTransaction($msp_order, $api_key, $api_server) {
 
@@ -171,9 +172,10 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
       $msp->setApiUrl($this->serverURL($api_server));
 
       try {
-        $msp_order = $msp->orders->post($msp_order);
 
+        $msp_order = $msp->orders->post($msp_order);
         return $msp->orders->getPaymentLink();
+
       } catch (Exception $e) {
         drupal_set_message("Error in communication with MultiSafepay Server. Contact Support.", 'error');
         watchdog('multisafepay_payment', t("Error: @error"), array('@error' => $e->getMessage()), WATCHDOG_ERROR);

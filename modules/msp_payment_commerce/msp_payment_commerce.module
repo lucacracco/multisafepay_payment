@@ -5,9 +5,9 @@
  */
 
 /**
- * Implements hook_multisafepay_payment_creator_order_info().
+ * Implements hook_multisafepay_payment_plugin_msp_order_info().
  */
-function msp_payment_commerce_multisafepay_payment_creator_order_info() {
+function msp_payment_commerce_multisafepay_payment_plugin_msp_order_info() {
   $creators_order['commerce'] = array(
     'label' => t('Drupal Commerce'),
     'description' => t('For Drupal Commerce orders.'),
@@ -15,4 +15,37 @@ function msp_payment_commerce_multisafepay_payment_creator_order_info() {
   );
 
   return $creators_order;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_state) {
+
+  // If this checkout form contains the payment method radios...
+  if (!empty($form['commerce_payment']['payment_method']['#options'])) {
+
+    // Loop over its options array looking for a PayPal WPS option.
+    foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
+      list($method_id, $rule_name) = explode('|', $key);
+
+      // Retrieve Payment Method.
+      $payment_method_id = str_replace('payment_commerce_', '', $method_id);
+      $payment_methods = entity_load('payment_method', array($payment_method_id));
+
+      // Retrieve Configuration.
+      $payment_methods->controller_data['configuration'];
+      $payment_method_plugin = $payment_methods[$payment_method_id]->controller_data['plugin'];
+
+      if ($payment_method_plugin == 'commerce') {
+        $configuration = unserialize($payment_methods[$payment_method_id]->controller_data['configuration']);
+
+        // Print Logo.
+        if (isset($configuration['logo'])) {
+          // TODO: print logo image selected.
+//          $value = "test";
+        }
+      }
+    }
+  }
 }
