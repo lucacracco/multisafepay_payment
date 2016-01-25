@@ -261,7 +261,6 @@ function multisafepay_payment_callback($status = NULL) {
     ), $payment, $payment->method, $configuration = array(), $creator_order_id, $definition);
     $creator_order->receiveFeedback($transaction_id, $payment, $status);
   } catch (Exception $e) {
-    // TODO: log error.
     watchdog('multisafepay_payment', t('Error: @error'), array('@error' => $e->getMessage()), WATCHDOG_ERROR);
     return NULL;
   }
@@ -312,9 +311,8 @@ function multisafepay_payment_get_order_from_multisafepay($transaction_id, Payme
       return $msp_order;
 
     } catch (Exception $e) {
-      $message = t("Error: @error", array('@error' => $e->getMessage()));
       drupal_set_message("Error in communication with MultiSafepay Server. Contact Support.", 'error');
-      watchdog('multisafepay_payment', $message, array(), WATCHDOG_ERROR);
+      watchdog('multisafepay_payment', t("Error: @error"), array('@error' => $e->getMessage()), WATCHDOG_ERROR);
       return NULL;
     }
   }

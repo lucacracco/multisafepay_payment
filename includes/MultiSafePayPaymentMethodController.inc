@@ -175,10 +175,8 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
 
         return $msp->orders->getPaymentLink();
       } catch (Exception $e) {
-
-        $message = t("Error: @error", array('@error' => $e->getMessage()));
         drupal_set_message("Error in communication with MultiSafepay Server. Contact Support.", 'error');
-        watchdog('multisafepay_payment', $message, array(), WATCHDOG_ERROR);
+        watchdog('multisafepay_payment', t("Error: @error"), array('@error' => $e->getMessage()), WATCHDOG_ERROR);
         return NULL;
       }
     }
@@ -186,7 +184,7 @@ class MultiSafePayPaymentMethodController extends PaymentMethodController {
       // Library Not Loaded.
       $message = "Library Not Loaded. Contact Support.";
       drupal_set_message($message, 'error');
-      watchdog('multisafepay_payment', $message, WATCHDOG_ERROR);
+      watchdog('multisafepay_payment', $message, array(), WATCHDOG_ERROR);
       return NULL;
     }
   }

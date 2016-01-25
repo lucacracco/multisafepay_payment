@@ -216,7 +216,7 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
 
       // Log.
       watchdog(
-        'msp_payment_commerce',
+        'msp_payment',
         t('User with payment \'@pid\' return from MultiSafepay with status \'@status\''),
         array(
           '@pid' => $payment->pid,
@@ -239,7 +239,7 @@ abstract class MultiSafePayPaymentCreatorOrderBase implements MultiSafePayPaymen
 
       // Log
       watchdog(
-        'msp_payment_commerce',
+        'msp_payment',
         t('Notification payment \'@pid\' return from MultiSafepay with status \'@status\''),
         array(
           '@pid' => $payment->pid,
