@@ -408,7 +408,7 @@ function multisafepay_payment_get_order_from_multisafepay($transaction_id, Payme
  */
 function multisafepay_payment_logo($msp_logo = NULL) {
   // TODO: include .gif
-  $files_logo = file_scan_directory(drupal_get_path('module', 'multisafepay_payment') . '/images', '/\.png/');
+  $files_logo = file_scan_directory(drupal_get_path('module', 'multisafepay_payment') . '/images', '([^\s]+(\.(?i)(jpg|png|gif|bmp))$)');
 
   foreach ($files_logo as $file) {
     $msp_maps_logos[$file->name] = array(

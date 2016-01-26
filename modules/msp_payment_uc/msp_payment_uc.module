@@ -22,16 +22,21 @@ function msp_payment_uc_multisafepay_payment_plugin_msp_order_info() {
  */
 function msp_payment_uc_uc_payment_method_alter(&$methods) {
   foreach ($methods as $key => $method) {
-    if (stripos(strtolower($method['name']), 'multisafepay') !== FALSE) {
+    if (stripos(strtolower($method['id']), 'payment_ubercart_') !== FALSE) {
 
       // Retrieve Payment Method.;
       $payment_method_id = str_replace('payment_ubercart_', '', $method['id']);
       $payment_methods = entity_load('payment_method', array($payment_method_id));
 
+      // Check if payment method is multisafepay method payment.
+      if ($payment_methods[$payment_method_id]->controller->name != 'MultiSafePayPaymentMethodController') {
+        continue;
+      }
+
       // Retrieve Configuration.
       $payment_method_plugin = $payment_methods[$payment_method_id]->controller_data['plugin'];
 
-      // If plugin used is 'commerce'.
+      // If plugin used is 'ubercart'.
       if ($payment_method_plugin == 'ubercart') {
 
         // Retrieve a configuration plugin.

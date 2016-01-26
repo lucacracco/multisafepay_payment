@@ -33,6 +33,11 @@ function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_s
       $payment_method_id = str_replace('payment_commerce_', '', $method_id);
       $payment_methods = entity_load('payment_method', array($payment_method_id));
 
+      // Check if payment method is multisafepay method payment.
+      if ($payment_methods[$payment_method_id]->controller->name != 'MultiSafePayPaymentMethodController') {
+        continue;
+      }
+
       // Retrieve Configuration.
       $payment_method_plugin = $payment_methods[$payment_method_id]->controller_data['plugin'];
 
