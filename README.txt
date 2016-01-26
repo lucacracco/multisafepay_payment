@@ -55,7 +55,7 @@ INSTALLATION
 
  * Download libraries 'MultiSafepay PHP' from https://github.com/MultiSafepay/PHP.
    Extract zip and rename folder in 'multisafepay'. Copy libraries folder in
-   drupal libraries folder (es. /sites/all/libraries/).
+   Drupal libraries folder (es. /sites/all/libraries/).
    At the end you should have /sites/all/libraries/multisafepay/models/API/Object/Core.php
    for example.
 
@@ -87,7 +87,7 @@ Q: What is the use of the plugin?
 
 A: The implementation of the plugin allows you to define a plug that fits your needs.
    You can then customize the management of the data sent to the server MultiSafepay
-   without using hooks or "rounds absurd" to change or implement customizations.
+   without using hooks or "to the moon and back journey" to change or implement customizations.
    Also in the plugin, you can also define the management of return notification
    from the server MultiSafepay.
    It is hoped that by using this infrastructure makes the customization,
@@ -104,7 +104,7 @@ A: You have to create a class that extends the interface MultiSafePayPaymentCrea
    Once followed these steps the plugin will be selected
    in the configuration of the payment method.
 
-Q: I have to do a little customization, I have to create a plugin the same?
+Q: I have to do a little customization, have I to create a new plugin too?
 
 A: Not necessarily. You can use a plugin already provided and the hook
    hook_multisafepay_payment_msp_order().
@@ -114,7 +114,7 @@ MAINTAINERS
 
 Current maintainers:
  * Luca Cracco (luca_cracco) - https://www.drupal.org/u/luca_cracco
- * Emanuel Righetto () - https://www.drupal.org/u/emanuelrighetto
+ * Emanuel Righetto (erighetto) - https://www.drupal.org/u/emanuelrighetto
 
 This project has been sponsored by:
  * AthenaSPA
@@ -126,5 +126,5 @@ This project has been sponsored by:
    Athena Parts: motorbike, scooter, maxi scooter, off road and automotive
    mechanics and electronics.
    Athena Evolution: Italian distribution of brands such as GoPro, VR|46,
-   Red Bull Eyewear, Ogio, Skullcandy, TomTom, XSories, Jawbone, SP Gadgets,
+   Red Bull Racing Eyewear, Ogio, Skullcandy, TomTom, XSories, Jawbone, 
    Go4Fun and Klaxon.
