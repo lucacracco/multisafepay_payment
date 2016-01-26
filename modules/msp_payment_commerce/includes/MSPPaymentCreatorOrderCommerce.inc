@@ -56,15 +56,15 @@ class MSPPaymentCreatorOrderCommerce extends MultiSafePayPaymentCreatorOrderBase
     }
 
     // Load commerce order.
-    $commerce_order = commerce_order_load($payment->context['order_id']);
+    $commerce_order = commerce_order_load($payment->context_data['order_id']);
     $wrapper_commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
 
     // Return array order.
     $msp_order = array(
       "type" => "redirect",
-      "order_id" => $payment->context['order_id'],
+      "order_id" => $payment->context_data['order_id'],
       "currency" => $payment->currency_code,
-      "amount" => $payment->context['balance_amount'],
+      "amount" => $payment->context_data['balance_amount'],
       "description" => $payment->description,
       "payment_options" => array(
         "notification_url" => $base_url . "/multisafepay/callback?payment_pid=" . $payment->pid,

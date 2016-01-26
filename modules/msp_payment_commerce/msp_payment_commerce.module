@@ -25,7 +25,7 @@ function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_s
   // If this checkout form contains the payment method radios...
   if (!empty($form['commerce_payment']['payment_method']['#options'])) {
 
-    // Loop over its options array looking for a PayPal WPS option.
+    // Loop over its options array looking for a MultiSafepay Payment option.
     foreach ($form['commerce_payment']['payment_method']['#options'] as $key => &$value) {
       list($method_id, $rule_name) = explode('|', $key);
 
@@ -34,16 +34,26 @@ function msp_payment_commerce_form_commerce_checkout_form_alter(&$form, &$form_s
       $payment_methods = entity_load('payment_method', array($payment_method_id));
 
       // Retrieve Configuration.
-      $payment_methods->controller_data['configuration'];
       $payment_method_plugin = $payment_methods[$payment_method_id]->controller_data['plugin'];
 
+      // If plugin used is 'commerce'.
       if ($payment_method_plugin == 'commerce') {
+
+        // Retrieve a configuration plugin.
         $configuration = unserialize($payment_methods[$payment_method_id]->controller_data['configuration']);
 
         // Print Logo.
         if (isset($configuration['logo'])) {
-          // TODO: print logo image selected.
-//          $value = "test";
+          $logo_data = multisafepay_payment_logo($configuration['logo']);
+
+          $logo = array(
+            'path' => $logo_data['uri'],
+            'alt' => $logo_data['name'],
+            'title' => $value,
+            'attributes' => array('class' => 'multisafepay-logo'),
+          );
+
+          $value = $value . '<br />' . theme_image($logo);
         }
       }
     }

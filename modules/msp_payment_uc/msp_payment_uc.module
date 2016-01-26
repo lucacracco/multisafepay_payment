@@ -16,3 +16,41 @@ function msp_payment_uc_multisafepay_payment_plugin_msp_order_info() {
 
   return $creators_order;
 }
+
+/**
+ * Implements hook_uc_payment_method_alter().
+ */
+function msp_payment_uc_uc_payment_method_alter(&$methods) {
+  foreach ($methods as $key => $method) {
+    if (stripos(strtolower($method['name']), 'multisafepay') !== FALSE) {
+
+      // Retrieve Payment Method.;
+      $payment_method_id = str_replace('payment_ubercart_', '', $method['id']);
+      $payment_methods = entity_load('payment_method', array($payment_method_id));
+
+      // Retrieve Configuration.
+      $payment_method_plugin = $payment_methods[$payment_method_id]->controller_data['plugin'];
+
+      // If plugin used is 'commerce'.
+      if ($payment_method_plugin == 'ubercart') {
+
+        // Retrieve a configuration plugin.
+        $configuration = unserialize($payment_methods[$payment_method_id]->controller_data['configuration']);
+
+        // Print Logo.
+        if (isset($configuration['logo'])) {
+          $logo_data = multisafepay_payment_logo($configuration['logo']);
+
+          $logo = array(
+            'path' => $logo_data['uri'],
+            'alt' => $logo_data['name'],
+            'title' => $method['name'],
+            'attributes' => array('class' => 'multisafepay-logo'),
+          );
+
+          $methods[$key]['title'] = $methods[$key]['title'] . '<br />' . theme_image($logo);
+        }
+      }
+    }
+  }
+}

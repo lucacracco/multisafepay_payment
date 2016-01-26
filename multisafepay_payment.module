@@ -339,14 +339,10 @@ function multisafepay_payment_callback($status = NULL) {
   }
 
   try {
-    // TODO: reformat and correct
-//    $plugin = call_user_func(array(
-//      $definition['class'],
-//      'create'
-//    ), $payment, $payment->method, $configuration = array(), $plugin_id, $definition);
-//    $class = $payment->method->controller_data['plugin'];
-//    $plugin = new $class($plugin_id, $plugin_data, $controller_data['options']);
-//    $plugin->receiveFeedback($transaction_id, $payment, $status);
+    $configuration = unserialize($payment->method->controller_data['configuration']);
+    $configuration = is_array($configuration) ? $configuration : array();
+    $plugin = new $definition['class']($plugin_id, $definition, $configuration);
+    $plugin->receiveFeedback($transaction_id, $payment, $status);
   } catch (Exception $e) {
     watchdog('multisafepay_payment', t('Error: @error'), array('@error' => $e->getMessage()), WATCHDOG_ERROR);
     return NULL;

@@ -14,7 +14,7 @@ class MSPPaymentCreatorOrderUbercart extends MultiSafePayPaymentCreatorOrderBase
    * {@inheritdoc}
    */
   public function defaultConfiguration() {
-    parent::defaultConfiguration();
+    return parent::defaultConfiguration();
   }
 
   /**
