@@ -54,9 +54,9 @@ INSTALLATION
 ------------
 
  * Download libraries 'MultiSafepay PHP' from https://github.com/MultiSafepay/PHP.
-   Extract zip and rename folder in 'multisafepay'. Copy libraries folder in
+   Extract zip and rename folder in 'multisafepay_php'. Copy libraries folder in
    Drupal libraries folder (es. /sites/all/libraries/).
-   At the end you should have /sites/all/libraries/multisafepay/models/API/Object/Core.php
+   At the end you should have /sites/all/libraries/multisafepay_php/models/API/Object/Core.php
    for example.
 
  * Install as you would normally install a contributed Drupal module. See:
